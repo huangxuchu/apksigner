@@ -1,0 +1,7 @@
+ALIAS_PASSWORD = "alias_password"
+ALIAS = "alias"
+PASSWORD = "password"
+KEYSTORE = "keystore"
+PACKAGE_NAME = "package_name"
+REMARK = "remark"
+APP_NAME = "app_name"
