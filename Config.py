@@ -1,9 +1,11 @@
 import os
 
 # 签名配置文件路径
+# eg: NOVEL_KEYSTORE_EXECL_PATH = "./example/novel_password.xlsx"
 NOVEL_KEYSTORE_EXECL_PATH = "/Users/hongxiang/Develop/project_keystore/novel_password.xlsx"
 
 # 存放签名文件的路径
+# eg: NOVEL_KEYSTORE_PATH = "./example/novel_keystore"
 NOVEL_KEYSTORE_PATH = "/Users/hongxiang/Develop/project_keystore/novel_keystore"
 
 # 安卓sdk目录
