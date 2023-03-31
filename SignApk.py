@@ -79,7 +79,7 @@ def sign(keystore, task_id, apk_path, output_path):
     """
     if task_id is None or len(task_id) == 0:
         task_id = DateUtils.date_time()
-    print('开始签名 task=' + task_id)
+    print('开始签名 task=%s keystore=%s apk_path=%s output_path%s' % (task_id, keystore, apk_path, output_path))
     print('Using Apksigner ' + (CmdUtils.popen(Config.APKSIGNER + ' --version')[0]).strip())
     if not apk_path.endswith(".apk"):
         return
@@ -220,5 +220,7 @@ if __name__ == "__main__":
     # 当前运行的是 Windows 平台'
     # else:
     # 当前运行的是非 Windows 和 macOS 平台
-    # TODO 如果outputPath没有输入需要重apkPath截取
+    # 如果outputPath没有输入需要重apkPath截取
+    if outputPath is None or len(outputPath) == 0:
+        outputPath = os.path.dirname(apkPath)
     sign(keystoreName, None, apkPath, outputPath)
