@@ -9,6 +9,7 @@
 """
 import json
 import os
+import re
 import sys
 
 from openpyxl.utils import get_column_letter
@@ -30,6 +31,8 @@ APKSIGNER_ORDER_SIGN = """ sign --ks %s --ks-pass pass:%s --ks-key-alias %s --ke
 KEYTOOL_ORDER_APK_SIGN_INFO = """keytool -printcert -jarfile %s"""
 # 获取keystore的md5 参数：1=keystore文件路径, 2=keystore的密码
 KEYTOOL_ORDER_KEYSTORE_INFO = """keytool -list -v -keystore %s -storepass %s"""
+
+AAPT2_DUMP_BADGING = """ dump badging %s"""
 
 # 签名信息 key=包名
 _keystore_json = {}
@@ -96,15 +99,11 @@ def sign(selected_keystore, task_id, apk_path, output_path):
 
 def _sign(selected_keystore, apk_path):
     _init_keystore()
-    for v in _keystore_json.values():
-        print("遍历keystore" + str(v))
     keystore = None
     if selected_keystore is None or len(selected_keystore) == 0:
-        # TODO 获取apk里面的包名，
-        package_name = get_apk_info(apk_path)
+        package_name = get_apk_info(apk_path).package_name
         keystore = _keystore_json[package_name]
     else:
-        # TODO 循环检查列表里是否有签名，没有就报错，有就执行
         for v in _keystore_json.values():
             if v[Constants.KEYSTORE] == selected_keystore:
                 keystore = v
@@ -124,9 +123,26 @@ def _sign(selected_keystore, apk_path):
     return code
 
 
-def get_apk_info(apk_path):
-    # TODO 返回包信息
-    return ApkInfo("", "", "")
+def get_apk_info(apk_path) -> ApkInfo:
+    task = Config.AAPT2 + AAPT2_DUMP_BADGING % (
+        apk_path
+    )
+    msg = CmdUtils.popen(task)
+    if len(msg) > 0:
+        packageInfo = msg[0]
+        # 获取包名
+        mp = re.match("package: name='([^' ]*)", packageInfo)
+        packageName = mp.group(1).strip()
+        # 匹配版本code
+        mvc = re.search("versionCode='(\\d+)'", packageInfo)
+        versionCode = mvc.group(1).strip()
+        # 匹配版本名称
+        mvn = re.search("versionName='([^' ]*)", packageInfo)
+        versionName = mvn.group(1).strip()
+        print("获取包信息 packageName=%s versionName=%s versionCode=%s" % (packageName, versionName, versionCode))
+        return ApkInfo(packageName, versionName, versionCode)
+    else:
+        return ApkInfo("", "", "")
 
 
 def _init_keystore():
@@ -196,9 +212,9 @@ def _parse_dc(info):
 
 if __name__ == "__main__":
     print("启动SignApk")
-    external_param_name = "/Users/hongxiang/Downloads/app-fantuankanshupro-release_120_jiagu.apk"
+    apk_path = "/Users/hongxiang/Downloads/dev03281727.apk"
     for arg in sys.argv:
         print(arg)
         if arg.startswith('-a'):
-            external_param_name = arg.replace('-a', '') + "-"
-    sign("fantuantanshujbk.jks", None, external_param_name, "/Users/hongxiang/Downloads")
+            apk_path = arg.replace('-a', '') + "-"
+    sign("", None, apk_path, "/Users/hongxiang/Downloads")

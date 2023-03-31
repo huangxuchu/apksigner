@@ -7,3 +7,8 @@ def popen(command):
     info = r.readlines()  # 读取命令行的输出到一个list
     r.close()
     return info
+
+
+# 执行命令行
+def system(command):
+    return os.system(command)
