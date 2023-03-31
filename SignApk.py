@@ -149,11 +149,7 @@ def _init_keystore():
     global _keystore_json
     if len(_keystore_json) == 0:
         sheet = ExcelFileUtils.get_sheet(Config.NOVEL_KEYSTORE_EXECL_PATH, ExcelFileUtils.DEFAULT_SHEET_ONE)
-        highestRow = sheet.max_row
-        highestColumn = sheet.max_column
-        c = get_column_letter(highestColumn)
-        c = c + str(highestRow)
-        print("加载execl数据")
+        print("加载Execl文件配置数据")
         obj = {}
         for rowOfCellObjects in sheet["A2":"G50"]:
             element = {}
