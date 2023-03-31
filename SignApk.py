@@ -216,4 +216,9 @@ if __name__ == "__main__":
             keystoreName = arg.replace('-k', '') + "-"
         if arg.startswith('-o'):
             outputPath = arg.replace('-o', '') + "-"
+    # if sys.platform.startswith('win'):
+    # 当前运行的是 Windows 平台'
+    # else:
+    # 当前运行的是非 Windows 和 macOS 平台
+    # TODO 如果outputPath没有输入需要重apkPath截取
     sign(keystoreName, None, apkPath, outputPath)
