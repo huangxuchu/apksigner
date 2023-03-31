@@ -7,12 +7,9 @@
 1、网页上传apk文件到本地的temp文件夹下，并生成时间戳的文件夹。没有temp文件夹时需要自动生成。
 2、签名程序获取本地temp目录下的时间错文件夹的目录下的所有apk
 """
-import json
 import os
 import re
 import sys
-
-from openpyxl.utils import get_column_letter
 
 import CmdUtils
 import Config
@@ -45,7 +42,7 @@ signing_task = []
 # task_id: 任务id
 # input_path: 批量签名存放任务的目录
 # output: 签名后的输出目录
-def sign_batch(selected_keystore, task_id, input_path, output_path):
+def sign_batch(keystore, task_id, input_path, output_path):
     if task_id is None or len(task_id) == 0:
         task_id = DateUtils.date_time()
     print('签名 task=' + task_id)
@@ -60,7 +57,7 @@ def sign_batch(selected_keystore, task_id, input_path, output_path):
         if not apk.endswith(".apk"):
             continue
         apkPath = os.path.join(taskPath, apk)
-        code = _sign(selected_keystore, apkPath)
+        code = _sign(keystore, apkPath)
         if code == 0:
             apk_sign = apk.replace(".apk", "_sign.apk")
             os.renames(apkPath, os.path.join(output_path, task_id, apk_sign))
@@ -71,10 +68,10 @@ def sign_batch(selected_keystore, task_id, input_path, output_path):
         FileUtils.rmdir(input_path)
 
 
-def sign(selected_keystore, task_id, apk_path, output_path):
+def sign(keystore, task_id, apk_path, output_path):
     """
     签名方法，签名后apk名称变为 xxx.apk->xxx_sign.apk
-    :param selected_keystore: apk的签名文件
+    :param keystore: apk的签名文件
     :param task_id: 任务id
     :param apk_path: apk的目录
     :param output_path: 签名后的输出目录
@@ -88,7 +85,7 @@ def sign(selected_keystore, task_id, apk_path, output_path):
         return
     signing_patch = apk_path + ".signing"
     FileUtils.copy(apk_path, signing_patch)
-    code = _sign(selected_keystore, signing_patch)
+    code = _sign(keystore, signing_patch)
     if code == 0:
         apk_signed = os.path.basename(signing_patch).replace(".apk.signing", "_sign.apk")
         os.renames(signing_patch, os.path.join(output_path, task_id, apk_signed))
@@ -97,15 +94,15 @@ def sign(selected_keystore, task_id, apk_path, output_path):
         LogUtils.e(TAG, f'签名失败 code={code}')
 
 
-def _sign(selected_keystore, apk_path):
+def _sign(keystore, apk_path):
     _init_keystore()
     keystore = None
-    if selected_keystore is None or len(selected_keystore) == 0:
+    if keystore is None or len(keystore) == 0:
         package_name = get_apk_info(apk_path).package_name
         keystore = _keystore_json[package_name]
     else:
         for v in _keystore_json.values():
-            if v[Constants.KEYSTORE] == selected_keystore:
+            if v[Constants.KEYSTORE] == keystore:
                 keystore = v
                 break
     if keystore is None or len(keystore) == 0:
@@ -208,9 +205,15 @@ def _parse_dc(info):
 
 if __name__ == "__main__":
     print("启动SignApk")
-    apk_path = "/Users/hongxiang/Downloads/dev03281727.apk"
+    apkPath = "/Users/hongxiang/Downloads/dev03281727.apk"
+    keystoreName = ""
+    outputPath = ""
     for arg in sys.argv:
         print(arg)
         if arg.startswith('-a'):
-            apk_path = arg.replace('-a', '') + "-"
-    sign("", None, apk_path, "/Users/hongxiang/Downloads")
+            apkPath = arg.replace('-a', '') + "-"
+        if arg.startswith('-k'):
+            keystoreName = arg.replace('-k', '') + "-"
+        if arg.startswith('-o'):
+            outputPath = arg.replace('-o', '') + "-"
+    sign(keystoreName, None, apkPath, outputPath)
