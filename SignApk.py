@@ -7,6 +7,7 @@
 1、网页上传apk文件到本地的temp文件夹下，并生成时间戳的文件夹。没有temp文件夹时需要自动生成。
 2、签名程序获取本地temp目录下的时间错文件夹的目录下的所有apk
 """
+import argparse
 import os
 import re
 import sys
@@ -205,22 +206,20 @@ def _parse_dc(info):
 
 if __name__ == "__main__":
     print("启动SignApk")
-    apkPath = "/Users/hongxiang/Downloads/dev03281727.apk"
-    keystoreName = ""
-    outputPath = ""
-    for arg in sys.argv:
-        print(arg)
-        if arg.startswith('-a'):
-            apkPath = arg.replace('-a', '') + "-"
-        if arg.startswith('-k'):
-            keystoreName = arg.replace('-k', '') + "-"
-        if arg.startswith('-o'):
-            outputPath = arg.replace('-o', '') + "-"
-    # if sys.platform.startswith('win'):
-    # 当前运行的是 Windows 平台'
-    # else:
-    # 当前运行的是非 Windows 和 macOS 平台
-    # 如果outputPath没有输入需要重apkPath截取
-    if outputPath is None or len(outputPath) == 0:
+    parser = argparse.ArgumentParser(description='示例程序')
+    parser.add_argument('-a', '--apkPath', metavar='FILE', type=str, required=True, help='要处理的Apk文件')
+    parser.add_argument('-k', '--keystore', type=str, help='是否指定已配置的签名文件')
+    parser.add_argument('-o', '--outputPath', type=str, help='是否指定Apk输出地址，默认为当前文件夹')
+    args = parser.parse_args()
+    apkPath = args.apkPath
+    keystoreName = args.keystore
+    outputPath = args.outputPath
+    print('处理的APK: ', apkPath)
+    if outputPath is None:
         outputPath = os.path.dirname(apkPath)
+    print('输出地址: ', outputPath)
+    if keystoreName:
+        print('签名文件: ', keystoreName)
+    else:
+        print('签名文件: 使用Apk包名对应的配置签名')
     sign(keystoreName, None, apkPath, outputPath)
