@@ -206,7 +206,7 @@ def _parse_dc(info):
 
 if __name__ == "__main__":
     print("启动SignApk")
-    parser = argparse.ArgumentParser(description='示例程序')
+    parser = argparse.ArgumentParser(description='APK签名工具')
     parser.add_argument('-a', '--apkPath', metavar='FILE', type=str, required=True, help='要处理的Apk文件')
     parser.add_argument('-k', '--keystore', type=str, help='是否指定已配置的签名文件')
     parser.add_argument('-o', '--outputPath', type=str, help='是否指定Apk输出地址，默认为当前文件夹')
