@@ -5,6 +5,14 @@ import re
 import shutil
 
 
+def isfile(path):
+    return os.path.isfile(path)
+
+
+def isdir(path):
+    return os.path.isdir(path)
+
+
 def dirname(path):
     return os.path.dirname(path)
 

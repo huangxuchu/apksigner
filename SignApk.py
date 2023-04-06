@@ -11,13 +11,9 @@ import argparse
 import os
 import re
 
-import CmdUtils
 import Config
 import Constants
-import DateUtils
-import ExcelFileUtils
-import FileUtils
-import LogUtils
+from utils import FileUtils, DateUtils, CmdUtils, ExcelFileUtils
 from AndroidTools import ApkSigner, Aapt
 from ApkInfo import ApkInfo
 from JarSigner import JARSIGNER_ORDER_SIGN
@@ -33,6 +29,9 @@ signing_task = []
 
 def jar_signer(keystore_name, task_id, apk_path, output_path):
     if not _check_apk_path_valid(apk_path):
+        return
+    if keystore_name is None or len(keystore_name) == 0:
+        print("使用jarsigner工具签名[--keystore]参数不能为空")
         return
     keystore = _get_keystore_by_name(keystore_name)
     task_id = _get_task_id(task_id)
@@ -79,6 +78,9 @@ def sign_batch(keystore, task_id, input_path, output_path):
     :param output_path: 签名后的输出目录
     :return:
     """
+    if not FileUtils.isdir(input_path) or not FileUtils.isdir(output_path):
+        print(f'请输入正确的文件夹路径地址 apkPath={input_path} outputPath={output_path}')
+        return
     if task_id is None or len(task_id) == 0:
         task_id = DateUtils.date_time()
     print('签名 task=' + task_id)
@@ -123,7 +125,7 @@ def sign(keystore, task_id, apk_path, output_path):
         os.renames(signing_patch, os.path.join(output_path, task_id, apk_signed))
         os.remove(signing_patch + r'.idsig')
     else:
-        LogUtils.e(TAG, f'签名失败 code={code}')
+        print(f'签名失败 code={code}')
 
 
 def _check_apk_path_valid(apk_path):
@@ -253,10 +255,7 @@ def _parse_output_path(input_args):
     if js:
         return apk_path.replace(".apk", "_sign.apk")
     elif sb:
-        if os.path.isdir(apk_path):
-            return apk_path
-        else:
-            return FileUtils.dirname(apk_path)
+        return apk_path
     else:
         return FileUtils.dirname(apk_path)
 
@@ -265,11 +264,16 @@ if __name__ == "__main__":
     print("---------------- SignApk 启动 ----------------")
     ApkInfo()
     parser = argparse.ArgumentParser(description='APK签名工具')
-    parser.add_argument('-a', '--apkPath', metavar='FILE', type=str, required=True, help='要处理的Apk文件')
-    parser.add_argument('-k', '--keystore', type=str, help='是否指定已配置的签名文件')
-    parser.add_argument('-o', '--outputPath', type=str, help='是否指定Apk输出地址，默认为当前文件夹')
-    parser.add_argument('-js', '--jarsigner', action="store_true", help='是否使用jarsigner给apk包签名')
-    parser.add_argument('-ki', '--keystoreInfo', action="store_true", help='是否展示Execl表格签名信息')
+    parser.add_argument('-a', '--apkPath', metavar='FILE', type=str, required=True,
+                        help='要处理的Apk文件，如果是执行signBatch命令，请输入Apk所在的文件夹路径')
+    parser.add_argument('-k', '--keystore', type=str,
+                        help='是否指定已配置的签名文件')
+    parser.add_argument('-o', '--outputPath', type=str,
+                        help='是否指定Apk输出地址，默认为当前文件夹')
+    parser.add_argument('-js', '--jarsigner', action="store_true",
+                        help='是否使用jarsigner给apk包签名')
+    parser.add_argument('-ki', '--keystoreInfo', action="store_true",
+                        help='是否展示Execl表格签名信息')
     parser.add_argument('-sb', '--signBatch', action="store_true",
                         help='是否批量执行签名Apksigner.sign命令，批量签名将会删除源Apk文件，请注意备注')
     _args = parser.parse_args()
@@ -287,7 +291,7 @@ if __name__ == "__main__":
         print('签名文件: 使用Apk包名对应的配置签名')
     # 默认使用安卓的签名工具
     # 如果有jarsinger参数，使用jarsinger给apk签名
-    print('是否使用jarsigner: ', _jarsigner)
+    # 如果有signBatch参数，使用批量给apk签名
     if _jarsigner:
         jar_signer(_keystoreName, None, _apkPath, outputPath)
     elif _signBatch:
