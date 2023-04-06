@@ -5,6 +5,14 @@ import re
 import shutil
 
 
+def dirname(path):
+    return os.path.dirname(path)
+
+
+def filename(path):
+    return os.path.basename(path)
+
+
 def read_file(path):
     with open(path, 'r') as f:
         return f.read()

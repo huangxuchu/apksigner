@@ -18,3 +18,6 @@ APKTOOL_JAR = os.path.join(ANDROID_SDK_HOME_PATH, 'apktool', 'apktool.jar')
 APKSIGNER = os.path.join(ANDROID_SDK_HOME_PATH, 'build-tools', ANDROID_SDK_VERSION, 'apksigner')
 # aapt2
 AAPT2 = os.path.join(ANDROID_SDK_HOME_PATH, 'build-tools', ANDROID_SDK_VERSION, 'aapt')
+
+# jarsigner工具
+JAR_SIGNER = "jarsigner"
