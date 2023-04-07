@@ -83,7 +83,7 @@ def sign_batch(keystore, task_id, input_path, output_path):
         return
     if task_id is None or len(task_id) == 0:
         task_id = DateUtils.date_time()
-    print('签名 task=' + task_id)
+    print('签名 task=%s apk_path=%s output_path=%s' % (task_id, input_path, output_path))
     print('Using Apksigner ' + (CmdUtils.popen(Config.APKSIGNER + ' --version')[0]).strip())
     if task_id in signing_task:
         return
@@ -115,7 +115,7 @@ def sign(keystore, task_id, apk_path, output_path):
     if not _check_apk_path_valid(apk_path):
         return
     task_id = _get_task_id(task_id)
-    print('开始签名 task=%s keystore=%s apk_path=%s output_path=%s' % (task_id, keystore, apk_path, output_path))
+    print('签名 task=%s apk_path=%s output_path=%s' % (task_id, apk_path, output_path))
     print('Using Apksigner ' + (CmdUtils.popen(Config.APKSIGNER + ' --version')[0]).strip())
     signing_patch = apk_path + ".signing"
     FileUtils.copy(apk_path, signing_patch)
@@ -169,7 +169,7 @@ def _sign(keystore, apk_path):
         keystore = _get_keystore_by_package(package_name)
     else:
         keystore = _get_keystore_by_name(keystore)
-    print("签名数据: " + keystore[Constants.APP_NAME] + " Apk路径: " + apk_path)
+    print("签名keystore=" + str(keystore))
     task = Config.APKSIGNER + ApkSigner.APKSIGNER_ORDER_SIGN % (
         os.path.join(Config.NOVEL_KEYSTORE_PATH, keystore[Constants.KEYSTORE]),
         keystore[Constants.PASSWORD],
