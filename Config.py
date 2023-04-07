@@ -19,5 +19,5 @@ APKSIGNER = os.path.join(ANDROID_SDK_HOME_PATH, 'build-tools', ANDROID_SDK_VERSI
 # aapt2
 AAPT2 = os.path.join(ANDROID_SDK_HOME_PATH, 'build-tools', ANDROID_SDK_VERSION, 'aapt')
 
-# jarsigner工具
+# jarsigner工具存放地址，有配置环境可以直接使用jarsigner
 JAR_SIGNER = "jarsigner"
