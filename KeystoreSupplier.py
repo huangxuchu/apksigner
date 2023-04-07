@@ -9,6 +9,8 @@ _keystore = {}
 
 
 def keystore():
+    if len(_keystore) == 0:
+        raise Exception("KeystoreSupplier未初始化，请调用init方法进行初始化")
     return MappingProxyType(_keystore)
 
 
