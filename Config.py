@@ -1,12 +1,23 @@
 import os
 
+from utils import ExcelFileUtils
+
 # 签名配置文件路径
 # eg: NOVEL_KEYSTORE_EXECL_PATH = "./example/novel_password.xlsx"
 NOVEL_KEYSTORE_EXECL_PATH = "/Users/hongxiang/Develop/project_keystore/novel_password.xlsx"
+PLAN_KEYSTORE_EXECL_PATH = "/Users/hongxiang/Develop/project_keystore/plan_password.xlsx"
 
 # 存放签名文件的路径
 # eg: NOVEL_KEYSTORE_PATH = "./example/novel_keystore"
-NOVEL_KEYSTORE_PATH = "/Users/hongxiang/Develop/project_keystore/novel_keystore"
+NOVEL_KEYSTORE_FOLDER = "/Users/hongxiang/Develop/project_keystore/novel_keystore"
+PLAN_KEYSTORE_FOLDER = "/Users/hongxiang/Develop/project_keystore/plan_keystore"
+
+KEYSTORE_INFO = {
+    NOVEL_KEYSTORE_FOLDER
+    : ExcelFileUtils.get_sheet(NOVEL_KEYSTORE_EXECL_PATH, ExcelFileUtils.DEFAULT_SHEET_ONE),
+    PLAN_KEYSTORE_FOLDER
+    : ExcelFileUtils.get_sheet(PLAN_KEYSTORE_EXECL_PATH, ExcelFileUtils.DEFAULT_SHEET_ONE)
+}
 
 # 安卓sdk目录
 ANDROID_SDK_HOME_PATH = "/Users/hongxiang/Library/Android/sdk"

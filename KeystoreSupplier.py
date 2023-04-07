@@ -3,7 +3,6 @@ from types import MappingProxyType
 
 import Config
 import Constants
-from utils import ExcelFileUtils
 
 _keystore = {}
 
@@ -41,37 +40,43 @@ def init(show_keystore_info=False):
     if len(_keystore) == 0:
         if show_keystore_info:
             print("+++++++ 加载Execl文件配置数据 开始 +++++++")
-        sheet = ExcelFileUtils.get_sheet(Config.NOVEL_KEYSTORE_EXECL_PATH, ExcelFileUtils.DEFAULT_SHEET_ONE)
-        obj = {}
-        for rowOfCellObjects in sheet["A2":"G50"]:
-            element = {}
-            packageName = ""
-            for cellObj in rowOfCellObjects:
-                coordinate = cellObj.coordinate
-                value = ""
-                if cellObj.value is not None:
-                    value = cellObj.value
-                if coordinate.startswith("A"):
-                    element[Constants.APP_NAME] = value
-                elif coordinate.startswith("B"):
-                    if value is None or len(value) <= 0:
-                        break
-                    element[Constants.PACKAGE_NAME] = value
-                    packageName = value
-                elif coordinate.startswith("C"):
-                    element[Constants.KEYSTORE] = value
-                elif coordinate.startswith("D"):
-                    element[Constants.PASSWORD] = value
-                elif coordinate.startswith("E"):
-                    element[Constants.ALIAS] = value
-                elif coordinate.startswith("F"):
-                    element[Constants.ALIAS_PASSWORD] = value
-                elif coordinate.startswith("G"):
-                    element[Constants.REMARK] = value
-                if show_keystore_info:
-                    print(coordinate + "->" + value)
-            if len(element) > 0 and Constants.PACKAGE_NAME in element:
-                obj[packageName] = element
+        for key, values in Config.KEYSTORE_INFO.items():
+            obj = _parse_keystore_sheet(values, show_keystore_info, key)
+            _keystore.update(obj)
         if show_keystore_info:
             print("+++++++ 加载Execl文件配置数据 结束 +++++++")
-        _keystore = obj
+
+
+def _parse_keystore_sheet(sheet, show_keystore_info, keystore_folder):
+    obj = {}
+    for rowOfCellObjects in sheet["A2":"G50"]:
+        element = {}
+        packageName = ""
+        for cellObj in rowOfCellObjects:
+            coordinate = cellObj.coordinate
+            value = ""
+            if cellObj.value is not None:
+                value = cellObj.value
+            if coordinate.startswith("A"):
+                element[Constants.APP_NAME] = value
+            elif coordinate.startswith("B"):
+                if value is None or len(value) <= 0:
+                    break
+                element[Constants.PACKAGE_NAME] = value
+                packageName = value
+            elif coordinate.startswith("C"):
+                element[Constants.KEYSTORE] = value
+            elif coordinate.startswith("D"):
+                element[Constants.PASSWORD] = value
+            elif coordinate.startswith("E"):
+                element[Constants.ALIAS] = value
+            elif coordinate.startswith("F"):
+                element[Constants.ALIAS_PASSWORD] = value
+            elif coordinate.startswith("G"):
+                element[Constants.REMARK] = value
+            if show_keystore_info:
+                print(coordinate + "->" + value)
+        if len(element) > 0 and Constants.PACKAGE_NAME in element:
+            element[Constants.KEYSTORE_FOLDER] = keystore_folder
+            obj[packageName] = element
+    return obj

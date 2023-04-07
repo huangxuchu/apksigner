@@ -50,7 +50,7 @@ def show_keystore_list(keystore_name):
 
 
 def _show_keystore_list(keystore):
-    kk = os.path.join(Config.NOVEL_KEYSTORE_PATH, keystore[Constants.KEYSTORE])
+    kk = os.path.join(keystore[Constants.KEYSTORE_FOLDER], keystore[Constants.KEYSTORE])
     kps = keystore[Constants.PASSWORD]
     print(f"签名文件: {kk}")
     print(f"签名配置: {str(keystore)}")

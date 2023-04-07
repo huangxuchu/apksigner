@@ -35,7 +35,7 @@ def jar_signer(keystore_name, task_id, apk_path, output_path):
     print(
         '开始jarsigner签名: task=%s keystore=%s apk_path=%s output_path%s' % (task_id, keystore, apk_path, output_path))
     task = Config.JAR_SIGNER + JARSIGNER_ORDER_SIGN % (
-        os.path.join(Config.NOVEL_KEYSTORE_PATH, keystore[Constants.KEYSTORE]),
+        os.path.join(keystore[Constants.KEYSTORE_FOLDER], keystore[Constants.KEYSTORE]),
         os.path.join(output_path),
         apk_path,
         keystore[Constants.ALIAS],
@@ -124,7 +124,7 @@ def _sign(keystore, apk_path):
         keystore = KeystoreSupplier.get_keystore_by_name(keystore)
     print("签名keystore=" + str(keystore))
     task = Config.APKSIGNER + ApkSigner.APKSIGNER_ORDER_SIGN % (
-        os.path.join(Config.NOVEL_KEYSTORE_PATH, keystore[Constants.KEYSTORE]),
+        os.path.join(keystore[Constants.KEYSTORE_FOLDER], keystore[Constants.KEYSTORE]),
         keystore[Constants.PASSWORD],
         keystore[Constants.ALIAS],
         keystore[Constants.ALIAS_PASSWORD],
