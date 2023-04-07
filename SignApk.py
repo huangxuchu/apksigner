@@ -9,19 +9,16 @@
 """
 import argparse
 import os
-import re
 
+import ApkInfo
 import Config
 import Constants
-from utils import FileUtils, DateUtils, CmdUtils, ExcelFileUtils
-from AndroidTools import ApkSigner, Aapt
-from ApkInfo import ApkInfo
+import KeystoreSupplier
+from AndroidTools import ApkSigner
 from JarSigner import JARSIGNER_ORDER_SIGN
+from utils import FileUtils, DateUtils, CmdUtils
 
 TAG = 'SignApk'
-
-# 签名信息 key=包名
-_keystore_json = {}
 
 # 正在执行的任务
 signing_task = []
@@ -33,7 +30,7 @@ def jar_signer(keystore_name, task_id, apk_path, output_path):
     if keystore_name is None or len(keystore_name) == 0:
         print("使用jarsigner工具签名[--keystore]参数不能为空")
         return
-    keystore = _get_keystore_by_name(keystore_name)
+    keystore = KeystoreSupplier.get_keystore_by_name(keystore_name)
     task_id = _get_task_id(task_id)
     print(
         '开始jarsigner签名: task=%s keystore=%s apk_path=%s output_path%s' % (task_id, keystore, apk_path, output_path))
@@ -45,28 +42,6 @@ def jar_signer(keystore_name, task_id, apk_path, output_path):
         keystore[Constants.PASSWORD])
     code = os.system(task)
     return code
-
-
-def get_apk_info(apk_path) -> ApkInfo:
-    task = Config.AAPT2 + Aapt.AAPT2_DUMP_BADGING % (
-        apk_path
-    )
-    msg = CmdUtils.popen(task)
-    if len(msg) > 0:
-        packageInfo = msg[0]
-        # 获取包名
-        mp = re.match("package: name='([^' ]*)", packageInfo)
-        packageName = mp.group(1).strip()
-        # 匹配版本code
-        mvc = re.search("versionCode='(\\d+)'", packageInfo)
-        versionCode = mvc.group(1).strip()
-        # 匹配版本名称
-        mvn = re.search("versionName='([^' ]*)", packageInfo)
-        versionName = mvn.group(1).strip()
-        print("获取包信息 packageName=%s versionName=%s versionCode=%s" % (packageName, versionName, versionCode))
-        return ApkInfo(packageName, versionName, versionCode)
-    else:
-        return ApkInfo()
 
 
 def sign_batch(keystore, task_id, input_path, output_path):
@@ -135,28 +110,6 @@ def _check_apk_path_valid(apk_path):
     return v
 
 
-def _get_keystore_by_package(package_name):
-    _init_keystore()
-    k = _keystore_json[package_name]
-    if k is None or len(k) == 0:
-        raise Exception(
-            '未获取到签名数据，请检查"keystore"的配置文件是否存在，并确认是否配置包名为\"%s\"的行。' % package_name)
-    return k
-
-
-def _get_keystore_by_name(keystore_name):
-    _init_keystore()
-    k = ""
-    for v in _keystore_json.values():
-        if v[Constants.KEYSTORE] == keystore_name:
-            k = v
-            break
-    if k is None or len(k) == 0:
-        raise Exception(
-            '未获取到签名数据，请检查"keystore"的配置文件是否存在，并确认是否配置签名为\"%s\"的行。' % keystore_name)
-    return k
-
-
 def _get_task_id(task_id):
     if task_id is None or len(task_id) == 0:
         task_id = DateUtils.date_time()
@@ -165,10 +118,10 @@ def _get_task_id(task_id):
 
 def _sign(keystore, apk_path):
     if keystore is None or len(keystore) == 0:
-        package_name = get_apk_info(apk_path).package_name
-        keystore = _get_keystore_by_package(package_name)
+        package_name = ApkInfo.get_apk_info(apk_path).package_name
+        keystore = KeystoreSupplier.get_keystore_by_package(package_name)
     else:
-        keystore = _get_keystore_by_name(keystore)
+        keystore = KeystoreSupplier.get_keystore_by_name(keystore)
     print("签名keystore=" + str(keystore))
     task = Config.APKSIGNER + ApkSigner.APKSIGNER_ORDER_SIGN % (
         os.path.join(Config.NOVEL_KEYSTORE_PATH, keystore[Constants.KEYSTORE]),
@@ -178,47 +131,6 @@ def _sign(keystore, apk_path):
         apk_path)
     code = os.system(task)
     return code
-
-
-def _init_keystore():
-    global _keystore_json
-    if len(_keystore_json) == 0:
-        if _keystoreInfo:
-            print("+++++++ 加载Execl文件配置数据 开始 +++++++")
-        sheet = ExcelFileUtils.get_sheet(Config.NOVEL_KEYSTORE_EXECL_PATH, ExcelFileUtils.DEFAULT_SHEET_ONE)
-        obj = {}
-        for rowOfCellObjects in sheet["A2":"G50"]:
-            element = {}
-            packageName = ""
-            for cellObj in rowOfCellObjects:
-                coordinate = cellObj.coordinate
-                value = ""
-                if cellObj.value is not None:
-                    value = cellObj.value
-                if coordinate.startswith("A"):
-                    element[Constants.APP_NAME] = value
-                elif coordinate.startswith("B"):
-                    if value is None or len(value) <= 0:
-                        break
-                    element[Constants.PACKAGE_NAME] = value
-                    packageName = value
-                elif coordinate.startswith("C"):
-                    element[Constants.KEYSTORE] = value
-                elif coordinate.startswith("D"):
-                    element[Constants.PASSWORD] = value
-                elif coordinate.startswith("E"):
-                    element[Constants.ALIAS] = value
-                elif coordinate.startswith("F"):
-                    element[Constants.ALIAS_PASSWORD] = value
-                elif coordinate.startswith("G"):
-                    element[Constants.REMARK] = value
-                if _keystoreInfo:
-                    print(coordinate + "->" + value)
-            if len(element) > 0 and Constants.PACKAGE_NAME in element:
-                obj[packageName] = element
-        if _keystoreInfo:
-            print("+++++++ 加载Execl文件配置数据 结束 +++++++")
-        _keystore_json = obj
 
 
 def _parse_dc(info):
@@ -262,7 +174,6 @@ def _parse_output_path(input_args):
 
 if __name__ == "__main__":
     print("---------------- SignApk 启动 ----------------")
-    ApkInfo()
     parser = argparse.ArgumentParser(description='APK签名工具')
     parser.add_argument('-a', '--apkPath', metavar='FILE', type=str, required=True,
                         help='要处理的Apk文件，如果是执行signBatch命令，请输入Apk所在的文件夹路径')
@@ -272,16 +183,18 @@ if __name__ == "__main__":
                         help='是否指定Apk输出地址，默认为当前文件夹')
     parser.add_argument('-js', '--jarsigner', action="store_true",
                         help='是否使用jarsigner给apk包签名')
-    parser.add_argument('-ki', '--keystoreInfo', action="store_true",
+    parser.add_argument('-ski', '--showKeystoreInfo', action="store_true",
                         help='是否展示Execl表格签名信息')
     parser.add_argument('-sb', '--signBatch', action="store_true",
                         help='是否批量执行签名Apksigner.sign命令，批量签名将会删除源Apk文件，请注意备注')
     _args = parser.parse_args()
     _apkPath = _args.apkPath
     _keystoreName = _args.keystore
-    _keystoreInfo = _args.keystoreInfo
+    _showKeystoreInfo = _args.showKeystoreInfo
     _signBatch = _args.signBatch
     _jarsigner = _args.jarsigner
+    # 初始化keystore列表
+    KeystoreSupplier.init(_showKeystoreInfo)
     print('处理的APK: ', _apkPath)
     outputPath = _parse_output_path(_args)
     print('输出地址: ', outputPath)
