@@ -175,7 +175,7 @@ def _parse_output_path(input_args):
 if __name__ == "__main__":
     print("---------------- SignApk 启动 ----------------")
     parser = argparse.ArgumentParser(description='APK签名工具')
-    parser.add_argument('-a', '--apkPath', metavar='FILE', type=str, required=True,
+    parser.add_argument('-a', '--apkPath', nargs='?', const=None, default=None, metavar='FILE', type=str, required=True,
                         help='要处理的Apk文件，如果是执行signBatch命令，请输入Apk所在的文件夹路径')
     parser.add_argument('-k', '--keystore', type=str,
                         help='是否指定已配置的签名文件')
@@ -187,8 +187,15 @@ if __name__ == "__main__":
                         help='是否展示Execl表格签名信息')
     parser.add_argument('-sb', '--signBatch', action="store_true",
                         help='是否批量执行签名Apksigner.sign命令，批量签名将会删除源Apk文件，请注意备注')
-    _args = parser.parse_args()
-    _apkPath = _args.apkPath
+    _args = parser.parse_args(["-a"])
+    # 检查用户是否提供了 APK 文件路径
+    if _args.apkPath is None:
+        # 如果未提供路径，则要求用户输入路径
+        _args.apkPath = input("请输入 APK 文件路径：")
+        _apkPath = _args.apkPath.strip()
+    else:
+        # 如果提供了路径，则使用提供的路径
+        _apkPath = _args.apkPath
     _keystoreName = _args.keystore
     _showKeystoreInfo = _args.showKeystoreInfo
     _signBatch = _args.signBatch
