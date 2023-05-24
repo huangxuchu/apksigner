@@ -187,7 +187,7 @@ if __name__ == "__main__":
                         help='是否展示Execl表格签名信息')
     parser.add_argument('-sb', '--signBatch', action="store_true",
                         help='是否批量执行签名Apksigner.sign命令，批量签名将会删除源Apk文件，请注意备注')
-    _args = parser.parse_args(["-a"])
+    _args = parser.parse_args()
     # 检查用户是否提供了 APK 文件路径
     if _args.apkPath is None:
         # 如果未提供路径，则要求用户输入路径
