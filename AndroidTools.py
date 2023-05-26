@@ -11,3 +11,8 @@ class Aapt:
 class KeyTool:
     # 获取keystore的md5 参数：1=keystore文件路径, 2=keystore的密码
     KEYTOOL_LIST_V = """ -list -v -keystore %s -storepass %s"""
+
+
+class Zipalign:
+    # 对齐资源和数据 4字节对齐 参数1：输入地址，参数2：输出地址
+    ZIPALIGN = """ -v 4 %s %s"""

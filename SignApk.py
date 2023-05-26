@@ -9,14 +9,16 @@
 """
 import argparse
 import os
+import re
 
 import ApkInfo
 import Config
 import Constants
 import KeystoreSupplier
-from AndroidTools import ApkSigner
+from AndroidTools import ApkSigner, Zipalign
 from JarSigner import JARSIGNER_ORDER_SIGN
 from utils import FileUtils, DateUtils, CmdUtils
+from utils.LogUtils import error
 
 TAG = 'SignApk'
 
@@ -25,6 +27,14 @@ signing_task = []
 
 
 def jar_signer(keystore_name, task_id, apk_path, output_path):
+    """
+    java的签名工具
+    :param keystore_name:
+    :param task_id:
+    :param apk_path:
+    :param output_path:
+    :return:
+    """
     if not _check_apk_path_valid(apk_path):
         return
     if keystore_name is None or len(keystore_name) == 0:
@@ -70,9 +80,11 @@ def sign_batch(keystore, task_id, input_path, output_path):
         if not apk.endswith(".apk"):
             continue
         apk_path = os.path.join(taskPath, apk)
+        apk_path = _zipalign(apk_path, True)
+        apk = FileUtils.filename(apk_path)
         code = _sign(keystore, apk_path)
         if code == 0:
-            apk_sign = apk.replace(".apk", "_sign.apk")
+            apk_sign = replace_apk_suffix(apk)
             os.renames(apk_path, os.path.join(output_path, apk_sign))
             os.remove(apk_path + r'.idsig')
     signing_task.remove(task_id)
@@ -89,11 +101,12 @@ def sign(keystore, task_id, apk_path, output_path):
     """
     if not _check_apk_path_valid(apk_path):
         return
+    apk_path = _zipalign(apk_path, False)
     task_id = _get_task_id(task_id)
     print('签名 task=%s apk_path=%s output_path=%s' % (task_id, apk_path, output_path))
     print('Using Apksigner ' + (CmdUtils.popen(Config.APKSIGNER + ' --version')[0]).strip())
     signing_patch = apk_path + ".signing"
-    FileUtils.copy(apk_path, signing_patch)
+    FileUtils.rename(apk_path, signing_patch)
     code = _sign(keystore, signing_patch)
     if code == 0:
         apk_signed = os.path.basename(signing_patch).replace(".apk.signing", "_sign.apk")
@@ -101,6 +114,12 @@ def sign(keystore, task_id, apk_path, output_path):
         os.remove(signing_patch + r'.idsig')
     else:
         print(f'签名失败 code={code}')
+
+
+def replace_apk_suffix(filename):
+    pattern = r"_align\.apk$|.apk$"
+    new_filename = re.sub(pattern, "_sign.apk", filename)
+    return new_filename
 
 
 def _check_apk_path_valid(apk_path):
@@ -122,6 +141,7 @@ def _sign(keystore, apk_path):
         keystore = KeystoreSupplier.get_keystore_by_package(package_name)
     else:
         keystore = KeystoreSupplier.get_keystore_by_name(keystore)
+
     print("签名keystore=" + str(keystore))
     task = Config.APKSIGNER + ApkSigner.APKSIGNER_ORDER_SIGN % (
         os.path.join(keystore[Constants.KEYSTORE_FOLDER], keystore[Constants.KEYSTORE]),
@@ -131,6 +151,20 @@ def _sign(keystore, apk_path):
         apk_path)
     code = os.system(task)
     return code
+
+
+def _zipalign(apk_path, remove_raw_apk=False):
+    print("执行Zipalign，对齐资源和数据")
+    out_path = apk_path.replace(".apk", "_align.apk")
+    if apk_path != out_path and FileUtils.exists(out_path):
+        FileUtils.remove(out_path)
+    msg = CmdUtils.subrun(Config.ZIPALIGN + Zipalign.ZIPALIGN % (apk_path, out_path))
+    if msg == 0:
+        if remove_raw_apk:
+            FileUtils.remove(apk_path)
+        return out_path
+    else:
+        error(f"执行Zipalign 失败: {msg}")
 
 
 def _parse_dc(info):
@@ -219,4 +253,4 @@ if __name__ == "__main__":
     else:
         sign(_keystoreName, None, _apkPath, outputPath)
     print("---------------- SignApk 结束 ----------------")
-    print("\n\n\n")
+    print("\n\n")

@@ -1,3 +1,5 @@
+import sys
+
 from utils import DateUtils
 
 
@@ -11,3 +13,8 @@ def w(tag, msg):
 
 def e(tag, msg):
     print(DateUtils.date_time_full() + " Error/" + str(tag) + ": " + str(msg))
+
+
+def error(msg):
+    print(msg)
+    sys.exit()
