@@ -26,21 +26,31 @@ TAG = 'SignApk'
 signing_task = []
 
 
-def jar_signer(keystore_name, task_id, apk_path, output_path):
+def jar_signer(package_name, keystore_name, apk_path, output_path, task_id=None):
     """
-    java的签名工具
-    :param keystore_name:
-    :param task_id:
-    :param apk_path:
-    :param output_path:
-    :return:
-    """
+       java的签名工具
+       :param package_name:
+       :param keystore_name:
+       :param task_id:
+       :param apk_path:
+       :param output_path:
+       :return:
+       """
     if not _check_apk_path_valid(apk_path):
         return
+    keystore = None
     if keystore_name is None or len(keystore_name) == 0:
-        print("使用jarsigner工具签名[--keystore]参数不能为空")
+        if package_name is not None:
+            keystore = KeystoreSupplier.get_keystore_by_package(_packageName)
+    else:
+        keystore = KeystoreSupplier.get_keystore_by_name(keystore_name)
+    if keystore is None:
+        print("使用jarsigner工具签名[--keystore]或[--packageName]参数不能为空")
         return
-    keystore = KeystoreSupplier.get_keystore_by_name(keystore_name)
+    _jar_signer(apk_path, keystore, output_path, task_id)
+
+
+def _jar_signer(apk_path, keystore, output_path, task_id):
     task_id = _get_task_id(task_id)
     print(
         '开始jarsigner签名: task=%s keystore=%s apk_path=%s output_path%s' % (task_id, keystore, apk_path, output_path))
@@ -84,7 +94,7 @@ def sign_batch(keystore, task_id, input_path, output_path):
         apk = FileUtils.filename(apk_path)
         code = _sign(keystore, apk_path)
         if code == 0:
-            apk_sign = replace_apk_suffix(apk)
+            apk_sign = replace_align_suffix(apk)
             os.renames(apk_path, os.path.join(output_path, apk_sign))
             os.remove(apk_path + r'.idsig')
     signing_task.remove(task_id)
@@ -116,8 +126,14 @@ def sign(keystore, task_id, apk_path, output_path):
         print(f'签名失败 code={code}')
 
 
-def replace_apk_suffix(filename):
+def replace_align_suffix(filename):
     pattern = r"_align\.apk$|.apk$"
+    new_filename = re.sub(pattern, "_sign.apk", filename)
+    return new_filename
+
+
+def replace_unsign_suffix(filename):
+    pattern = r"_unsign\.apk$|.apk$"
     new_filename = re.sub(pattern, "_sign.apk", filename)
     return new_filename
 
@@ -199,7 +215,7 @@ def _parse_output_path(input_args):
     sb = input_args.signBatch
     js = input_args.jarsigner
     if js:
-        return apk_path.replace(".apk", "_sign.apk")
+        return replace_unsign_suffix(apk_path)
     elif sb:
         return apk_path
     else:
@@ -212,9 +228,11 @@ if __name__ == "__main__":
     parser.add_argument('-a', '--apkPath', nargs='?', const=None, default=None, metavar='FILE', type=str, required=True,
                         help='要处理的Apk文件，如果是执行signBatch命令，请输入Apk所在的文件夹路径')
     parser.add_argument('-k', '--keystore', type=str,
-                        help='是否指定已配置的签名文件')
+                        help='指定已配置的签名文件')
+    parser.add_argument('-p', '--packageName', type=str,
+                        help='指定已配置包名对应的签名文件')
     parser.add_argument('-o', '--outputPath', type=str,
-                        help='是否指定Apk输出地址，默认为当前文件夹')
+                        help='指定Apk输出地址，默认为当前文件夹')
     parser.add_argument('-js', '--jarsigner', action="store_true",
                         help='是否使用jarsigner给apk包签名')
     parser.add_argument('-ski', '--showKeystoreInfo', action="store_true",
@@ -231,6 +249,7 @@ if __name__ == "__main__":
         # 如果提供了路径，则使用提供的路径
         _apkPath = _args.apkPath
     _keystoreName = _args.keystore
+    _packageName = _args.packageName
     _showKeystoreInfo = _args.showKeystoreInfo
     _signBatch = _args.signBatch
     _jarsigner = _args.jarsigner
@@ -247,7 +266,7 @@ if __name__ == "__main__":
     # 如果有jarsinger参数，使用jarsinger给apk签名
     # 如果有signBatch参数，使用批量给apk签名
     if _jarsigner:
-        jar_signer(_keystoreName, None, _apkPath, outputPath)
+        jar_signer(_packageName, _keystoreName, _apkPath, outputPath)
     elif _signBatch:
         sign_batch(_keystoreName, None, _apkPath, outputPath)
     else:
