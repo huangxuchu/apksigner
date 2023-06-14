@@ -6,17 +6,21 @@ from utils import ExcelFileUtils
 # eg: NOVEL_KEYSTORE_EXECL_PATH = "./example/novel_password.xlsx"
 NOVEL_KEYSTORE_EXECL_PATH = "/Users/hongxiang/Develop/project_keystore/novel_password.xlsx"
 PLAN_KEYSTORE_EXECL_PATH = "/Users/hongxiang/Develop/project_keystore/plan_password.xlsx"
+THIRD_KEYSTORE_EXECL_PATH = "/Users/hongxiang/Develop/project_keystore/third_password.xlsx"
 
 # 存放签名文件的路径
 # eg: NOVEL_KEYSTORE_PATH = "./example/novel_keystore"
 NOVEL_KEYSTORE_FOLDER = "/Users/hongxiang/Develop/project_keystore/novel_keystore"
 PLAN_KEYSTORE_FOLDER = "/Users/hongxiang/Develop/project_keystore/plan_keystore"
+THIRD_KEYSTORE_FOLDER = "/Users/hongxiang/Develop/project_keystore/third_keystore"
 
 KEYSTORE_INFO = {
     NOVEL_KEYSTORE_FOLDER
     : ExcelFileUtils.get_sheet(NOVEL_KEYSTORE_EXECL_PATH, ExcelFileUtils.DEFAULT_SHEET_ONE),
     PLAN_KEYSTORE_FOLDER
-    : ExcelFileUtils.get_sheet(PLAN_KEYSTORE_EXECL_PATH, ExcelFileUtils.DEFAULT_SHEET_ONE)
+    : ExcelFileUtils.get_sheet(PLAN_KEYSTORE_EXECL_PATH, ExcelFileUtils.DEFAULT_SHEET_ONE),
+    THIRD_KEYSTORE_FOLDER
+    : ExcelFileUtils.get_sheet(THIRD_KEYSTORE_EXECL_PATH, ExcelFileUtils.DEFAULT_SHEET_ONE)
 }
 
 # 安卓sdk目录
